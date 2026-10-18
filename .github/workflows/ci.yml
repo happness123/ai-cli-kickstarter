@@ -33,11 +33,15 @@ jobs:
 
 
   test-powershell:
-    strategy:
-      matrix:
-        shell: [pwsh, powershell]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - shell: ${{ matrix.shell }}
+      - shell: pwsh
+        run: ./tests/run-tests.ps1
+
+  test-windows-powershell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: powershell
         run: ./tests/run-tests.ps1
