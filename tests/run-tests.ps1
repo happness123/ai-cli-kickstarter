@@ -43,3 +43,7 @@ foreach ($mode in @('ok', 'download-error', 'installer-error', 'version-error', 
     }
     Write-Host "PASS: Claude $mode"
 }
+
+# Expected failing fixtures must not leak a native exit code to the CI host.
+$global:LASTEXITCODE = 0
+Remove-Variable ClaudeTestAnswers -Scope Global
