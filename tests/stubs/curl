@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# The generated installer expands HOME at execution time.
+# shellcheck disable=SC2016
 # Test stub for curl. Probe URLs report HTTP 204; installer downloads
 # succeed with a tiny marker script, or fail when CURL_STUB_MODE=fail.
 url=""

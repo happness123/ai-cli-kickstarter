@@ -12,7 +12,7 @@ foreach ($mode in @('ok', 'download-error', 'installer-error', 'version-error', 
         function Read-Host { param($Prompt) if (!$script:answers.Count) { throw 'Unexpected prompt' }; $script:answers.Dequeue() }
         function Clear-Host {}
         function Start-Sleep { param($Seconds) }
-        function Write-Host { param($Object) Write-Output $Object }
+        function Write-Host { param([Parameter(ValueFromPipeline=$true)]$Object) process { Write-Output $Object } }
         function Invoke-WebRequest {
             param($Uri, $Method, $TimeoutSec, $MaximumRedirection, [switch]$UseBasicParsing)
             if ($Uri -like '*generate_204') { return @{StatusCode=204} }
@@ -31,7 +31,7 @@ foreach ($mode in @('ok', 'download-error', 'installer-error', 'version-error', 
     } $source $mode
     $text = $result -join "`n"
     if ($mode -eq 'ok') {
-        if ($text -notmatch 'Installation succeeded' -or $text -notmatch 'personal AI computer assistant') { throw "FAIL: $mode" }
+        if ($text -notmatch 'Installation succeeded' -or $text -notmatch 'personal AI computer assistant') { throw "FAIL: $mode`n$text" }
     } elseif ($mode -eq 'decline') {
         if ($text -match 'installer-ran') { throw "FAIL: $mode" }
     } else {
