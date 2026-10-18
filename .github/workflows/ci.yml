@@ -30,3 +30,11 @@ jobs:
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
           Invoke-ScriptAnalyzer -Path kickstarter.ps1 -Severity Warning -ExcludeRule PSAvoidUsingWriteHost, PSAvoidUsingInvokeExpression -EnableExit
+
+
+  test-powershell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: pwsh
+        run: ./tests/run-tests.ps1

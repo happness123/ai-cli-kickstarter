@@ -22,9 +22,10 @@ function T([string]$Key) {
         reachable="可以直接访问 Google。"; unreachable="无法直接访问 Google。";
         unknown="无法可靠判断 Google 是否可访问。";
         network_note="该结果只代表当前 PowerShell 对 Google 的连接，不判断地理位置。";
-        choose="请选择一个 Kickstarter："; default="直接按 Enter 选择 Qwen Code，或输入 1–3";
+        choose="请选择一个 Kickstarter："; default="直接按 Enter 选择 Qwen Code，或输入 1–4";
         qwen="中国大陆友好；官方独立安装器"; kimi="中国大陆友好；首次启动后输入 /login";
         buddy="腾讯生态；官方原生安装器目前为 Beta";
+        claude="Anthropic；官方原生安装器；首次启动需认证";
         checking="正在执行安装前检查……"; ready="即将安装"; confirm="继续？[Y/n]";
         installing="正在运行官方安装器……"; verifying="正在验证……"; success="安装成功。";
         not_found="安装器已结束，但当前 PowerShell 尚未找到命令。请重新打开 PowerShell 后再运行。";
@@ -37,10 +38,11 @@ function T([string]$Key) {
         reachable="Google is directly reachable."; unreachable="Google is not directly reachable.";
         unknown="Google reachability could not be determined reliably.";
         network_note="This only tests PowerShell access to Google; it does not infer location.";
-        choose="Choose a kickstarter:"; default="Press Enter for Qwen Code, or enter 1–3";
+        choose="Choose a kickstarter:"; default="Press Enter for Qwen Code, or enter 1–4";
         qwen="Mainland-China friendly; official standalone installer";
         kimi="Mainland-China friendly; enter /login after first launch";
         buddy="Tencent ecosystem; official native installer is currently Beta";
+        claude="Anthropic; official native installer; authentication required on first launch";
         checking="Running pre-installation checks..."; ready="Ready to install"; confirm="Continue? [Y/n]";
         installing="Running the official installer..."; verifying="Verifying..."; success="Installation succeeded.";
         not_found="The installer finished, but the command is not visible yet. Reopen PowerShell and try again.";
@@ -78,6 +80,7 @@ function Select-Provider([string]$Choice) {
         "1" { $script:ProviderName="Qwen Code"; $script:CommandName="qwen"; $script:InstallUrl="https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen-standalone.ps1" }
         "2" { $script:ProviderName="Kimi Code"; $script:CommandName="kimi"; $script:InstallUrl="https://code.kimi.com/install.ps1" }
         "3" { $script:ProviderName="CodeBuddy CLI"; $script:CommandName="codebuddy"; $script:InstallUrl="https://www.codebuddy.cn/cli/install.ps1" }
+        "4" { $script:ProviderName="Claude Code"; $script:CommandName="claude"; $script:InstallUrl="https://claude.ai/install.ps1" }
     }
 }
 
@@ -144,9 +147,10 @@ while ($true) {
             Write-Host "`n  [1] Qwen Code — $(T 'qwen')"
             Write-Host "`n  [2] Kimi Code — $(T 'kimi')"
             Write-Host "`n  [3] CodeBuddy CLI — $(T 'buddy')`n"
+            Write-Host "`n  [4] Claude Code — $(T 'claude')`n"
             $c = Read-Host (T "default")
             if ([string]::IsNullOrWhiteSpace($c)) { $c="1" }
-            if ($c -match '^[123]$') { Select-Provider $c; $State="PRECHECK" }
+            if ($c -match '^[1234]$') { Select-Provider $c; $State="PRECHECK" }
         }
         "PRECHECK" {
             Banner; Write-Host (T "checking")
@@ -168,7 +172,9 @@ while ($true) {
                 $resp = Invoke-WebRequest -Uri $InstallUrl -UseBasicParsing -TimeoutSec 60
                 $installer = if ($resp.Content -is [byte[]]) { [System.Text.Encoding]::UTF8.GetString($resp.Content) } else { [string]$resp.Content }
                 if ([string]::IsNullOrWhiteSpace($installer)) { throw "Empty installer script from $InstallUrl" }
+                $global:LASTEXITCODE = 0
                 Invoke-Expression $installer
+                if ($CommandName -eq "claude" -and $LASTEXITCODE -ne 0) { throw "Claude Code installer returned an error" }
                 $State="VERIFY"
             } catch {
                 $LastError=$_.Exception.Message; $State="ERROR"
@@ -178,10 +184,13 @@ while ($true) {
             Sync-SessionPath; Write-Host "`n$(T 'verifying')"
             try {
                 $cmd=Get-Command $CommandName -ErrorAction Stop
+                $global:LASTEXITCODE = 0
                 & $cmd.Source --version
+                if ($CommandName -eq "claude" -and $LASTEXITCODE -ne 0) { throw "Claude Code --version failed" }
                 Write-Host (T "success")
             } catch {
                 Write-Host (T "not_found")
+                if ($CommandName -eq "claude") { $LastError="Claude Code verification failed"; $State="ERROR"; break }
             }
             $State="HANDOFF"
         }
@@ -207,3 +216,4 @@ while ($true) {
         }
     }
 }
+

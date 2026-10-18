@@ -7,6 +7,7 @@
 - Qwen Code
 - Kimi Code
 - CodeBuddy CLI
+- Claude Code
 - macOS
 - Linux
 - Windows
@@ -31,6 +32,17 @@ bash Start-Linux.sh
 双击 `Start-Windows.cmd`。它会启动 PowerShell 状态机。
 
 若出现「Windows 已保护你的电脑」（SmartScreen）提示，点击「更多信息」，再点击「仍要运行」。这是 Windows 对从网上下载的文件的常规提醒。
+
+### Claude Code（选项 4）
+
+macOS / Linux / WSL 使用同一 Bash 状态机，Windows 使用 PowerShell 状态机；三个启动入口无需更改，默认仍为 Qwen Code。
+
+- macOS、Linux、WSL：官方原生安装器 `https://claude.ai/install.sh`。
+- Windows：官方原生安装器 `https://claude.ai/install.ps1`，无需管理员权限。Git for Windows 为可选依赖。
+- 前置要求：macOS 13+、Windows 10 1809+ / Server 2019+，或官方支持的 Linux；x64 / ARM64、至少 4 GB 内存。具体发行版及 Alpine 额外依赖见官方文档。
+- 验证：`claude --version`；验证失败进入 ERROR，不显示交接或启动提示。PATH 未刷新时请重开终端后验证。
+- 安装成功不代表认证或服务可用。首次运行 `claude` 按提示认证；需要符合 Anthropic 服务地区和账户要求。启动器不收集或配置 API Key，也不配置第三方模型服务。
+- 官方说明：https://code.claude.com/docs/en/setup （核对日期：2026-10-18）。
 
 ## Prompt 库：安装之后做什么
 
@@ -155,13 +167,14 @@ bash Start-Linux.sh
 
 ## 安装来源
 
+- Claude Code：Anthropic 官方 native installer，地址见上方平台说明
 - Qwen Code：官方 standalone installer
 - Kimi Code：官方 installer
 - CodeBuddy CLI：官方 native installer（当前官方文档标注 Beta）
 
 安装器会在执行前显示下载地址。供应商可能更新安装方式，因此发布前应重新核对官方文档。
 
-信任模型：本工具会下载并执行上述三家官方域名提供的安装脚本，运行安装即表示信任这些来源。启动器不会自行校验脚本内容，但会在执行前显示下载地址并要求确认。
+信任模型：本工具会下载并执行上述四家官方域名提供的安装脚本，运行安装即表示信任这些来源。启动器不会自行校验脚本内容，但会在执行前显示下载地址并要求确认。
 
 ## 开发
 
@@ -173,3 +186,4 @@ bash Start-Linux.sh
 ## 许可证
 
 MIT，见 [LICENSE](LICENSE)。
+

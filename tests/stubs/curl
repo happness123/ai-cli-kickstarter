@@ -8,5 +8,13 @@ case "$url" in
     printf '204';;
   *)
     if [ "${CURL_STUB_MODE:-ok}" = "fail" ]; then exit 6; fi
-    printf 'echo installer-ran\n';;
+    case "${CURL_STUB_MODE:-ok}" in
+      claude-ok|claude-bad-version)
+        printf 'mkdir -p "$HOME/.local/bin"\n'
+        printf 'printf "#!/bin/sh\\necho claude-stub\\nexit %s\\n" > "$HOME/.local/bin/claude"\n' "$(if [ "$CURL_STUB_MODE" = claude-ok ]; then echo 0; else echo 1; fi)"
+        printf 'chmod +x "$HOME/.local/bin/claude"\n';;
+      installer-error) printf 'exit 1\n';;
+      *) printf 'echo installer-ran\n';;
+    esac;;
 esac
+

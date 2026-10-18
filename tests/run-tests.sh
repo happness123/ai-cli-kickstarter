@@ -19,6 +19,7 @@ OUT=""
 # regression to the old infinite redraw loop fails instead of hanging.
 run_kickstarter(){
   local input="$1" mode="$2"
+  rm -f "$WORK/home/.local/bin/claude"
   printf '%s' "$input" > "$WORK/stdin"
   env HOME="$WORK/home" PATH="$STUBS:/usr/bin:/bin" CURL_STUB_MODE="$mode" TERM=dumb \
     bash "$ROOT/kickstarter.sh" < "$WORK/stdin" > "$WORK/out" 2>&1 &
@@ -91,6 +92,25 @@ run_kickstarter $'2\n1\nn\n\n' ok
 check "does not run the installer" not contains "Running the official installer"
 check "exits cleanly" rc_is 0
 
+echo "== Claude Code native installer =="
+run_kickstarter $'2\n4\nn\n\n' ok
+check "shows official Claude source" contains "https://claude.ai/install.sh"
+check "decline skips installer" not contains "Running the official installer"
+run_kickstarter $'2\n4\ny\nn\n\n' claude-ok
+check "Claude version succeeds" contains "claude-stub"
+check "Claude success reaches handoff" contains "personal AI computer assistant"
+check "Claude exits cleanly" rc_is 0
+run_kickstarter $'2\n4\ny\n3\n\n' claude-bad-version
+check "nonzero version enters ERROR" contains "verification failed"
+check "failed version blocks handoff" not contains "personal AI computer assistant"
+run_kickstarter $'2\n4\ny\n3\n\n' fail
+check "Claude download failure enters ERROR" contains "download failed"
+run_kickstarter $'2\n4\ny\n3\n\n' installer-error
+check "Claude installer failure enters ERROR" contains "installer returned an error"
+run_kickstarter $'1\n4\nn\n\n' ok
+check "Chinese menu includes Claude" contains "[4] Claude Code"
+
 echo
 echo "passed: $PASS  failed: $FAIL"
 [ "$FAIL" -eq 0 ]
+

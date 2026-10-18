@@ -27,10 +27,11 @@ t(){
       unknown) echo "无法可靠判断 Google 是否可访问。";;
       network_note) echo "该结果只代表当前 Terminal 对 Google 的连接，不判断地理位置。";;
       choose) echo "请选择一个 Kickstarter：";;
-      default) echo "直接按 Enter 选择 Qwen Code，或输入 1–3：";;
+      default) echo "直接按 Enter 选择 Qwen Code，或输入 1–4：";;
       qwen) echo "中国大陆友好；官方独立安装器";;
       kimi) echo "中国大陆友好；首次启动后输入 /login";;
       buddy) echo "腾讯生态；官方原生安装器目前为 Beta";;
+      claude) echo "Anthropic；官方原生安装器；首次启动需认证";;
       checking) echo "正在执行安装前检查……";;
       ready) echo "即将安装";;
       confirm) echo "继续？[Y/n]：";;
@@ -53,10 +54,11 @@ t(){
       unknown) echo "Google reachability could not be determined reliably.";;
       network_note) echo "This only tests the current terminal's access to Google; it does not infer location.";;
       choose) echo "Choose a kickstarter:";;
-      default) echo "Press Enter for Qwen Code, or enter 1–3:";;
+      default) echo "Press Enter for Qwen Code, or enter 1–4:";;
       qwen) echo "Mainland-China friendly; official standalone installer";;
       kimi) echo "Mainland-China friendly; enter /login after first launch";;
       buddy) echo "Tencent ecosystem; official native installer is currently Beta";;
+      claude) echo "Anthropic; official native installer; authentication required on first launch";;
       checking) echo "Running pre-installation checks...";;
       ready) echo "Ready to install";;
       confirm) echo "Continue? [Y/n]: ";;
@@ -88,6 +90,7 @@ select_provider(){
     1) PROVIDER_NAME="Qwen Code"; COMMAND_NAME="qwen"; INSTALL_URL="https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen-standalone.sh";;
     2) PROVIDER_NAME="Kimi Code"; COMMAND_NAME="kimi"; INSTALL_URL="https://code.kimi.com/install.sh";;
     3) PROVIDER_NAME="CodeBuddy CLI"; COMMAND_NAME="codebuddy"; INSTALL_URL="https://www.codebuddy.cn/cli/install.sh";;
+    4) PROVIDER_NAME="Claude Code"; COMMAND_NAME="claude"; INSTALL_URL="https://claude.ai/install.sh";;
   esac
 }
 
@@ -142,8 +145,9 @@ while true; do
       echo "  [1] Qwen Code — $(t qwen)"; echo
       echo "  [2] Kimi Code — $(t kimi)"; echo
       echo "  [3] CodeBuddy CLI — $(t buddy)"; echo
+      echo "  [4] Claude Code — $(t claude)"; echo
       read -r -p "$(t default) " c || exit 1
-      case "${c:-1}" in 1|2|3) select_provider "${c:-1}"; STATE="PRECHECK";; *) sleep 1;; esac;;
+      case "${c:-1}" in 1|2|3|4) select_provider "${c:-1}"; STATE="PRECHECK";; *) sleep 1;; esac;;
     PRECHECK)
       banner; t checking
       case "$(uname -s 2>/dev/null || true)" in Darwin|Linux) ;; *) LAST_ERROR="Unsupported OS"; STATE="ERROR"; continue;; esac
@@ -165,7 +169,11 @@ while true; do
       fi;;
     VERIFY)
       refresh_path; echo; t verifying
-      if command -v "$COMMAND_NAME" >/dev/null 2>&1 && "$COMMAND_NAME" --version; then t success; else t not_found; fi
+      if command -v "$COMMAND_NAME" >/dev/null 2>&1 && "$COMMAND_NAME" --version; then
+        t success
+      elif [[ "$COMMAND_NAME" == "claude" ]]; then
+        LAST_ERROR="Claude Code verification failed; restart Terminal and run claude --version"; STATE="ERROR"; continue
+      else t not_found; fi
       STATE="HANDOFF";;
     HANDOFF)
       echo; handoff; echo
@@ -182,3 +190,4 @@ while true; do
       read -r -p "$(t exit)" _; exit 0;;
   esac
 done
+
