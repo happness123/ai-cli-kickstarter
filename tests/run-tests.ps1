@@ -27,7 +27,11 @@ foreach ($mode in @('ok', 'download-error', 'installer-error', 'version-error', 
             Write-Host 'claude-stub'
             $global:LASTEXITCODE = if ($mode -eq 'version-error') { 1 } else { 0 }
         }
-        & ([scriptblock]::Create($source))
+        $fixture = Join-Path ([System.IO.Path]::GetTempPath()) ("kickstarter-" + [guid]::NewGuid() + ".ps1")
+        try {
+            [System.IO.File]::WriteAllText($fixture, $source, [System.Text.UTF8Encoding]::new($true))
+            & $fixture
+        } finally { Remove-Item $fixture -Force }
     } $source $mode
     $text = $result -join "`n"
     if ($mode -eq 'ok') {
