@@ -6,10 +6,10 @@ $source = $source.Replace('            exit', '            return')
 foreach ($mode in @('ok', 'download-error', 'installer-error', 'version-error', 'decline')) {
     $result = & {
         param($source, $mode)
-        $script:answers = [System.Collections.Generic.Queue[string]]::new()
+        $global:ClaudeTestAnswers = [System.Collections.Generic.Queue[string]]::new()
         $confirm = if ($mode -eq 'decline') { 'n' } else { 'y' }
-        foreach ($a in @('2', '4', $confirm, 'n', '3', '')) { $script:answers.Enqueue($a) }
-        function Read-Host { param($Prompt) if (!$script:answers.Count) { throw 'Unexpected prompt' }; $script:answers.Dequeue() }
+        foreach ($a in @('2', '4', $confirm, 'n', '3', '')) { $global:ClaudeTestAnswers.Enqueue($a) }
+        function Read-Host { param($Prompt) if (!$global:ClaudeTestAnswers.Count) { throw "Unexpected prompt: $Prompt ($mode)" }; $global:ClaudeTestAnswers.Dequeue() }
         function Clear-Host {}
         function Start-Sleep { param($Seconds) }
         function Write-Host { param([Parameter(ValueFromPipeline=$true)]$Object) process { Write-Output $Object } }
